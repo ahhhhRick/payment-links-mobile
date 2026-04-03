@@ -5,6 +5,10 @@ import { LINK_TYPE_CONFIGS, LinkType, LinkStatus, FulfillmentType, type PaymentL
 import { DonationTiers } from '../components/DonationTiers'
 import { CustomFieldsBuilder } from '../components/CustomFieldsBuilder'
 import { FulfillmentPicker } from '../components/FulfillmentPicker'
+import { VariantBuilder } from '../components/VariantBuilder'
+import { ModifierBuilder } from '../components/ModifierBuilder'
+import { InventoryFields } from '../components/InventoryFields'
+import { BuyerDataFields } from '../components/BuyerDataFields'
 
 interface CreateScreenProps {
   wizard: WizardState
@@ -83,6 +87,42 @@ function DetailsStep({ wizard, updateWizard }: { wizard: WizardState; updateWiza
             <TextInput style={styles.input} placeholder="e.g. Central Park Bandshell" value={wizard.eventVenue} onChangeText={(t) => updateWizard({ eventVenue: t })} placeholderTextColor={colors.textTertiary} />
           </View>
         </>
+      )}
+      {/* Variants — for items, events, food */}
+      {(wizard.linkType === LinkType.ItemSale || wizard.linkType === LinkType.EventTickets) && (
+        <VariantBuilder
+          variants={wizard.variants || []}
+          onVariantsChange={(v) => updateWizard({ variants: v })}
+          label={wizard.linkType === LinkType.EventTickets ? 'Ticket Tiers' : 'Variants'}
+          namePlaceholder={wizard.linkType === LinkType.EventTickets ? 'e.g. VIP' : 'e.g. Large'}
+        />
+      )}
+      {wizard.linkType === LinkType.FoodOrder && (
+        <ModifierBuilder
+          groups={wizard.modifierGroups || []}
+          onGroupsChange={(g) => updateWizard({ modifierGroups: g })}
+        />
+      )}
+      {/* Inventory — for items, events, digital, food */}
+      {(wizard.linkType === LinkType.ItemSale || wizard.linkType === LinkType.EventTickets || wizard.linkType === LinkType.DigitalProduct || wizard.linkType === LinkType.FoodOrder) && (
+        <InventoryFields
+          trackInventory={wizard.trackInventory || false}
+          totalQuantity={wizard.totalQuantity || ''}
+          maxPerOrder={wizard.maxPerOrder || ''}
+          onTrackChange={(v) => updateWizard({ trackInventory: v })}
+          onQuantityChange={(v) => updateWizard({ totalQuantity: v })}
+          onMaxPerOrderChange={(v) => updateWizard({ maxPerOrder: v })}
+        />
+      )}
+      {/* Buyer data — for invoices and services */}
+      {(wizard.linkType === LinkType.Invoice || wizard.linkType === LinkType.ServicePayment) && (
+        <BuyerDataFields
+          firstName={wizard.buyerFirstName || ''}
+          lastName={wizard.buyerLastName || ''}
+          email={wizard.buyerEmail || ''}
+          phone={wizard.buyerPhone || ''}
+          onUpdate={(field, value) => updateWizard({ [field]: value })}
+        />
       )}
     </View>
   )
@@ -182,6 +222,11 @@ function ReviewStep({ wizard }: { wizard: WizardState }) {
   rows.push({ label: 'Tipping', value: wizard.allowTipping ? 'Enabled' : 'Disabled' })
   rows.push({ label: 'Shipping', value: wizard.askForShipping ? 'Collect address' : 'No' })
   if (wizard.customFields.length > 0) rows.push({ label: 'Custom Fields', value: wizard.customFields.filter(Boolean).join(', ') })
+  if (wizard.variants && wizard.variants.length > 0) rows.push({ label: 'Variants', value: wizard.variants.map(v => v.name || '(unnamed)').join(', ') })
+  if (wizard.modifierGroups && wizard.modifierGroups.length > 0) rows.push({ label: 'Modifier Groups', value: `${wizard.modifierGroups.length} groups` })
+  if (wizard.trackInventory) rows.push({ label: 'Inventory', value: wizard.totalQuantity ? `${wizard.totalQuantity} available` : 'Tracked' })
+  if (wizard.maxPerOrder) rows.push({ label: 'Max Per Order', value: wizard.maxPerOrder })
+  if (wizard.buyerEmail) rows.push({ label: 'Buyer Email', value: wizard.buyerEmail })
 
   return (
     <View style={styles.stepContent}>

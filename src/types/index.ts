@@ -129,6 +129,18 @@ export interface WizardState {
   shippingFee?: string
   pickupInstructions?: string
   digitalUrl?: string
+  // Variants & modifiers
+  variants?: { id: string; name: string; price: string; stock: string }[]
+  modifierGroups?: any[]
+  // Inventory
+  trackInventory?: boolean
+  totalQuantity?: string
+  maxPerOrder?: string
+  // Buyer data (invoices/services)
+  buyerFirstName?: string
+  buyerLastName?: string
+  buyerEmail?: string
+  buyerPhone?: string
   // Checkout options
   allowTipping: boolean
   askForShipping: boolean
