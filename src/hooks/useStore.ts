@@ -1,7 +1,15 @@
 import { useState, useCallback } from 'react'
 import { LinkType, LinkStatus, type PaymentLink, type WizardState } from '../types'
+import { paymentLinksService } from '../services/paymentLinks'
+import { authStore } from '../services/auth'
 
-// Sample data for demo
+// ============================================================================
+// Mode: 'mock' uses local sample data, 'live' uses Square API
+// Set to 'live' once you've configured Square OAuth credentials
+// ============================================================================
+const API_MODE: 'mock' | 'live' = 'mock'
+
+// Sample data for demo / offline development
 const SAMPLE_LINKS: PaymentLink[] = [
   {
     id: '1',
@@ -95,10 +103,99 @@ const INITIAL_WIZARD: WizardState = {
 export function useStore() {
   const [links, setLinks] = useState<PaymentLink[]>(SAMPLE_LINKS)
   const [wizard, setWizard] = useState<WizardState>(INITIAL_WIZARD)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  const addLink = useCallback((link: PaymentLink) => {
+  // ---- Auth ----
+
+  const checkAuth = useCallback(async () => {
+    if (API_MODE === 'mock') {
+      setIsAuthenticated(true)
+      return true
+    }
+    const authed = await authStore.isAuthenticated()
+    setIsAuthenticated(authed)
+    return authed
+  }, [])
+
+  const logout = useCallback(async () => {
+    await authStore.clearTokens()
+    setIsAuthenticated(false)
+    setLinks([])
+  }, [])
+
+  // ---- Links ----
+
+  const fetchLinks = useCallback(async () => {
+    if (API_MODE === 'mock') return
+
+    setIsLoading(true)
+    setError(null)
+    try {
+      const result = await paymentLinksService.list()
+      setLinks(result.links)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch links')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  const addLink = useCallback(async (link: PaymentLink) => {
+    if (API_MODE === 'live') {
+      // In live mode, the link was already created via the API
+      // Just add it to local state
+    }
     setLinks(prev => [link, ...prev])
   }, [])
+
+  const createLinkFromWizard = useCallback(async (locationId?: string): Promise<PaymentLink | null> => {
+    if (API_MODE === 'mock') {
+      // Mock creation
+      const amountCents = wizard.amountDollars ? Math.round(parseFloat(wizard.amountDollars) * 100) : 0
+      const newLink: PaymentLink = {
+        id: Date.now().toString(),
+        name: wizard.name || 'Untitled Link',
+        linkType: wizard.linkType!,
+        status: LinkStatus.Active,
+        amount: amountCents > 0 ? { amount: amountCents, currency: 'USD' } : null,
+        url: `https://square.link/u/${Math.random().toString(36).slice(2, 8)}`,
+        description: wizard.description,
+        createdAt: new Date().toISOString(),
+        totalOrders: 0,
+        totalRevenue: { amount: 0, currency: 'USD' },
+        eventDate: wizard.eventDate || undefined,
+        eventVenue: wizard.eventVenue || undefined,
+        isPaused: false,
+        isOneTime: false,
+      }
+      setLinks(prev => [newLink, ...prev])
+      return newLink
+    }
+
+    // Live API creation
+    setIsLoading(true)
+    setError(null)
+    try {
+      const newLink = await paymentLinksService.create(wizard, locationId || 'main')
+      // Enrich with wizard data that the API doesn't store
+      const enrichedLink: PaymentLink = {
+        ...newLink,
+        name: wizard.name || newLink.name,
+        linkType: wizard.linkType!,
+        eventDate: wizard.eventDate || undefined,
+        eventVenue: wizard.eventVenue || undefined,
+      }
+      setLinks(prev => [enrichedLink, ...prev])
+      return enrichedLink
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create link')
+      return null
+    } finally {
+      setIsLoading(false)
+    }
+  }, [wizard])
 
   const togglePause = useCallback((id: string) => {
     setLinks(prev => prev.map(l =>
@@ -108,9 +205,19 @@ export function useStore() {
     ))
   }, [])
 
-  const deleteLink = useCallback((id: string) => {
+  const deleteLink = useCallback(async (id: string) => {
+    if (API_MODE === 'live') {
+      try {
+        await paymentLinksService.delete(id)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete link')
+        return
+      }
+    }
     setLinks(prev => prev.filter(l => l.id !== id))
   }, [])
+
+  // ---- Wizard ----
 
   const resetWizard = useCallback(() => {
     setWizard(INITIAL_WIZARD)
@@ -120,6 +227,8 @@ export function useStore() {
     setWizard(prev => ({ ...prev, ...updates }))
   }, [])
 
+  // ---- Stats ----
+
   const stats = {
     activeLinks: links.filter(l => l.status === LinkStatus.Active).length,
     totalLinks: links.length,
@@ -128,13 +237,26 @@ export function useStore() {
   }
 
   return {
+    // Auth
+    isAuthenticated,
+    checkAuth,
+    logout,
+    // Links
     links,
+    isLoading,
+    error,
+    fetchLinks,
     addLink,
+    createLinkFromWizard,
     togglePause,
     deleteLink,
+    // Wizard
     wizard,
     updateWizard,
     resetWizard,
+    // Stats
     stats,
+    // Config
+    apiMode: API_MODE,
   }
 }
