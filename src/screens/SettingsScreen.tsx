@@ -2,7 +2,12 @@ import React, { useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet } from 'react-native'
 import { colors, spacing, radius, fontSize, fontWeight } from '../utils/theme'
 
-export function SettingsScreen() {
+interface SettingsScreenProps {
+  onAnalyticsPress?: () => void
+  onTemplatesPress?: () => void
+}
+
+export function SettingsScreen({ onAnalyticsPress, onTemplatesPress }: SettingsScreenProps = {}) {
   const [defaultTipping, setDefaultTipping] = useState(false)
   const [autoDeactivateInvoices, setAutoDeactivateInvoices] = useState(true)
   const [autoDeactivateEvents, setAutoDeactivateEvents] = useState(true)
@@ -87,6 +92,20 @@ export function SettingsScreen() {
           </View>
         </View>
 
+        {/* Quick Links */}
+        <Text style={styles.sectionLabel}>Tools</Text>
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.row} onPress={onAnalyticsPress}>
+            <Text style={styles.rowLabel}>Analytics</Text>
+            <Text style={styles.chevron}>&rsaquo;</Text>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity style={styles.row} onPress={onTemplatesPress}>
+            <Text style={styles.rowLabel}>Templates</Text>
+            <Text style={styles.chevron}>&rsaquo;</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* About */}
         <Text style={styles.sectionLabel}>About</Text>
         <View style={styles.card}>
@@ -146,4 +165,5 @@ const styles = StyleSheet.create({
   rowHint: { fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 2 },
   divider: { height: 1, backgroundColor: colors.borderLight, marginLeft: spacing.lg },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
+  chevron: { fontSize: 20, color: colors.textTertiary },
 })

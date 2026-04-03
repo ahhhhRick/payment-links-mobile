@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
 import { colors, spacing, radius, fontSize, fontWeight } from '../utils/theme'
 
 const SAMPLE_ORDERS = [
@@ -17,7 +17,11 @@ const ORDER_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   Refunded: { bg: colors.warningLight, text: colors.warning },
 }
 
-export function OrdersScreen() {
+interface OrdersScreenProps {
+  onOrderPress?: (order: any) => void
+}
+
+export function OrdersScreen({ onOrderPress }: OrdersScreenProps = {}) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -29,7 +33,14 @@ export function OrdersScreen() {
         {SAMPLE_ORDERS.map((order) => {
           const statusColor = ORDER_STATUS_COLORS[order.status] || ORDER_STATUS_COLORS.Paid
           return (
-            <View key={order.id} style={styles.orderCard}>
+            <TouchableOpacity key={order.id} style={styles.orderCard} onPress={() => onOrderPress?.({
+              ...order,
+              email: 'customer@example.com',
+              items: [{ name: order.linkName, qty: 1, price: order.amount }],
+              fulfillment: { type: 'Simple', status: order.status === 'Shipped' ? 'Shipped' : 'Pending' },
+              tip: order.amount.includes('75') ? '$11.25' : undefined,
+              tax: '$2.10',
+            })} activeOpacity={0.7}>
               <View style={styles.orderTop}>
                 <View style={styles.orderInfo}>
                   <Text style={styles.orderLink}>{order.linkName}</Text>
@@ -43,7 +54,7 @@ export function OrdersScreen() {
                 </View>
               </View>
               <Text style={styles.orderDate}>{order.date}</Text>
-            </View>
+            </TouchableOpacity>
           )
         })}
         <View style={{ height: 40 }} />
