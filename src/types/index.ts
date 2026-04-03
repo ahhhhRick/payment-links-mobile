@@ -124,6 +124,12 @@ export interface WizardState {
   amountDollars: string
   eventDate: string
   eventVenue: string
+  // Fulfillment
+  fulfillmentType?: FulfillmentType
+  shippingFee?: string
+  pickupInstructions?: string
+  digitalUrl?: string
+  // Checkout options
   allowTipping: boolean
   askForShipping: boolean
   enableCoupon: boolean
