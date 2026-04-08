@@ -8,6 +8,7 @@ interface LinkDetailScreenProps {
   link: PaymentLink
   onClose: () => void
   onShare: () => void
+  onEdit: () => void
   onTogglePause: () => void
   onDelete: () => void
 }
@@ -38,7 +39,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function LinkDetailScreen({ link, onClose, onShare, onTogglePause, onDelete }: LinkDetailScreenProps) {
+export function LinkDetailScreen({ link, onClose, onShare, onEdit, onTogglePause, onDelete }: LinkDetailScreenProps) {
   const config = LINK_TYPE_CONFIGS[link.linkType]
   const status = STATUS_CONFIG[link.status] || STATUS_CONFIG.active
 
@@ -82,6 +83,9 @@ export function LinkDetailScreen({ link, onClose, onShare, onTogglePause, onDele
           {link.amount && (
             <Text style={styles.heroAmount}>{formatMoney(link.amount)}</Text>
           )}
+          <TouchableOpacity onPress={onEdit}>
+            <Text style={styles.editLink}>Edit</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Stats */}
@@ -178,6 +182,7 @@ const styles = StyleSheet.create({
   backButton: { fontSize: fontSize.md, color: colors.primary, fontWeight: fontWeight.medium },
   headerTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.textPrimary },
   shareButton: { fontSize: fontSize.md, color: colors.primary, fontWeight: fontWeight.semibold },
+  editLink: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.textPrimary },
   content: { paddingBottom: 40 },
   hero: {
     alignItems: 'center',

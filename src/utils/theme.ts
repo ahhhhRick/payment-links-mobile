@@ -1,37 +1,55 @@
 export const colors = {
-  // Primary
-  primary: '#006AFF',
-  primaryLight: '#E8F0FE',
+  // Brand — Cash App green
+  brand: '#00C62A',
+  brandDim: 'rgba(0, 198, 42, 0.12)',
 
-  // Backgrounds
+  // Backgrounds — light mode: warm off-white base
+  // dark mode equivalent: #0A0A14
   background: '#FFFFFF',
-  backgroundSecondary: '#F5F5F7',
-  backgroundTertiary: '#EBEBED',
+  backgroundSecondary: '#FFFFFF',
+  backgroundTertiary: '#F2F2F2',
+
+  // Surfaces
+  surfaceDefault: '#FFFFFF',
+  surfaceElevated: '#F0F0F0',
+  surfacePressed: '#E8E8E8',
+
+  // Aliases kept for component compat
+  glassSurface: '#FFFFFF',
+  glassSurfaceMid: '#F0F0F0',
+  glassBorder: '#E0E0E0',
+  glassHighlight: 'rgba(255, 255, 255, 0.80)',
+
+  // Primary action — black button in light mode (Arcade prominent)
+  primary: '#000000',
+  primaryText: '#FFFFFF',
+  primaryLight: 'rgba(0, 0, 0, 0.06)',
 
   // Text
-  textPrimary: '#1A1A1A',
-  textSecondary: '#6B6B6B',
-  textTertiary: '#9B9B9B',
+  textPrimary: '#000000',
+  textSecondary: '#666666',
+  textTertiary: '#999999',
   textInverse: '#FFFFFF',
 
-  // Status
-  success: '#00A86B',
-  successLight: '#E6F9F0',
-  warning: '#F5A623',
-  warningLight: '#FEF3E0',
-  danger: '#E74C3C',
-  dangerLight: '#FDECEC',
-  info: '#006AFF',
-  infoLight: '#E8F0FE',
+  // Status — adjusted for legibility on light backgrounds
+  success: '#008A1E',
+  successLight: 'rgba(0, 138, 30, 0.10)',
+  warning: '#A05C00',
+  warningLight: 'rgba(160, 92, 0, 0.10)',
+  danger: '#CC0000',
+  dangerLight: 'rgba(204, 0, 0, 0.10)',
+  info: '#0055CC',
+  infoLight: 'rgba(0, 85, 204, 0.10)',
 
-  // Borders
+  // Borders / dividers
   border: '#E0E0E0',
-  borderLight: '#F0F0F0',
+  borderLight: '#EEEEEE',
 
-  // Misc
-  shadow: 'rgba(0, 0, 0, 0.08)',
+  // Shadow
+  shadow: 'rgba(0, 0, 0, 0.10)',
 }
 
+// Arcade spacing tokens: small=8, medium=16, large=24
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -42,22 +60,25 @@ export const spacing = {
   xxxl: 32,
 }
 
+// Arcade border-radius tokens
 export const radius = {
-  sm: 6,
-  md: 10,
-  lg: 14,
-  xl: 20,
-  full: 999,
+  sm: 6,       // xsmall: list item numbers
+  md: 8,       // small: input fields
+  lg: 16,      // medium: cards, input cards
+  xl: 24,      // large: modals, cards
+  xxl: 40,     // xlarge: half sheets
+  full: 9999,  // pill: buttons, search, toggle
 }
 
+// Arcade type scale (approximate)
 export const fontSize = {
   xs: 11,
   sm: 13,
   md: 15,
-  lg: 17,
+  lg: 17,   // Arcade body/label size
   xl: 20,
   xxl: 24,
-  xxxl: 32,
+  xxxl: 34, // Arcade hero display
 }
 
 export const fontWeight = {

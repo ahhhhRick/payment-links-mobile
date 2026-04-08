@@ -43,6 +43,7 @@ export interface PaymentLink {
   totalRevenue: Money
   eventDate?: string
   eventVenue?: string
+  imageUri?: string
   isPaused: boolean
   isOneTime: boolean
 }
@@ -141,6 +142,8 @@ export interface WizardState {
   buyerLastName?: string
   buyerEmail?: string
   buyerPhone?: string
+  // Cover image
+  imageUri?: string
   // Checkout options
   allowTipping: boolean
   askForShipping: boolean

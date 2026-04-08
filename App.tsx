@@ -20,7 +20,7 @@ import type { AppTab, PaymentLink } from './src/types'
 type Screen =
   | { type: 'tab'; tab: AppTab }
   | { type: 'share'; link: PaymentLink }
-  | { type: 'detail'; link: PaymentLink }
+  | { type: 'detail'; link: PaymentLink; returnTab: AppTab }
   | { type: 'orderDetail'; order: any }
   | { type: 'analytics' }
   | { type: 'templates' }
@@ -48,7 +48,7 @@ export default function App() {
 
   const goTab = (tab: AppTab) => setScreen({ type: 'tab', tab })
   const goShare = (link: PaymentLink) => setScreen({ type: 'share', link })
-  const goDetail = (link: PaymentLink) => setScreen({ type: 'detail', link })
+  const goDetail = (link: PaymentLink) => setScreen({ type: 'detail', link, returnTab: activeTab })
 
   const handleCreateLink = (link: PaymentLink) => {
     store.addLink(link)
@@ -92,13 +92,14 @@ export default function App() {
   // Link detail
   if (screen.type === 'detail') {
     const link = screen.link
+    const returnTab = screen.returnTab
     return (
       <LinkDetailScreen
         link={link}
-        onClose={() => goTab('links')}
+        onClose={() => goTab(returnTab)}
         onShare={() => goShare(link)}
-        onTogglePause={() => { store.togglePause(link.id); goTab('links') }}
-        onDelete={() => { store.deleteLink(link.id); goTab('links') }}
+        onTogglePause={() => { store.togglePause(link.id); goTab(returnTab) }}
+        onDelete={() => { store.deleteLink(link.id); goTab(returnTab) }}
       />
     )
   }
@@ -165,6 +166,7 @@ export default function App() {
         return (
           <OrdersScreen
             onOrderPress={(order: any) => setScreen({ type: 'orderDetail', order })}
+            totalRevenue={store.stats.totalRevenue}
           />
         )
       case 'settings':
@@ -183,13 +185,17 @@ export default function App() {
     <View style={styles.container}>
       <StatusBar style="dark" />
       {renderScreen()}
-      {activeTab !== 'create' && (
-        <TabBar activeTab={activeTab} onTabPress={goTab} />
-      )}
+      <TabBar activeTab={activeTab} onTabPress={goTab} />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: { flex: 1, backgroundColor: '#F7F7F7' },
+  tabBarOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
 })

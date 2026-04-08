@@ -115,14 +115,14 @@ export function SettingsScreen({ onAnalyticsPress, onTemplatesPress }: SettingsS
           </View>
         </View>
 
-        <View style={{ height: 60 }} />
+        <View style={{ height: 140 }} />
       </ScrollView>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.backgroundSecondary },
+  container: { flex: 1, backgroundColor: '#F7F7F7' },
   header: {
     paddingHorizontal: spacing.xl,
     paddingTop: 60,

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Switch, StyleSheet, Alert } from 'react-native'
 import { colors, spacing, radius, fontSize, fontWeight } from '../utils/theme'
 import { LINK_TYPE_CONFIGS, LinkType, LinkStatus, FulfillmentType, type PaymentLink, type WizardState } from '../types'
@@ -9,6 +9,7 @@ import { VariantBuilder } from '../components/VariantBuilder'
 import { ModifierBuilder } from '../components/ModifierBuilder'
 import { InventoryFields } from '../components/InventoryFields'
 import { BuyerDataFields } from '../components/BuyerDataFields'
+import { ImagePickerField } from '../components/ImagePickerField'
 
 interface CreateScreenProps {
   wizard: WizardState
@@ -19,8 +20,20 @@ interface CreateScreenProps {
 }
 
 // Step 0: Type Selector
+const TYPE_BENEFITS: Record<string, string> = {
+  simple:        'Fast, one-tap checkout — ideal for lessons, sessions, or quick sales',
+  item_sale:     'Sell physical goods with shipping or local pickup built in',
+  event_tickets: 'Gate-keep access with ticket limits and automatic sold-out handling',
+  donation:      'Let supporters choose their own amount — no friction, no minimum',
+  service:       'Send a professional invoice your client pays in seconds',
+  subscription:  'Lock in recurring revenue with automatic weekly or monthly billing',
+  food_order:    'Take customisable orders with modifiers, combos, and pickup times',
+  digital:       'Deliver files or access links instantly after payment — zero fulfilment',
+}
+
 function TypeSelector({ onSelect }: { onSelect: (type: LinkType) => void }) {
   const types = Object.values(LINK_TYPE_CONFIGS)
+
   return (
     <View>
       <View style={styles.stepHeader}>
@@ -30,14 +43,11 @@ function TypeSelector({ onSelect }: { onSelect: (type: LinkType) => void }) {
       <View style={styles.typeList}>
         {types.map((config) => (
           <TouchableOpacity key={config.type} style={styles.typeCard} onPress={() => onSelect(config.type)} activeOpacity={0.7}>
-            <View style={[styles.typeCardIcon, { backgroundColor: config.color + '15' }]}>
-              <Text style={[styles.typeCardIconText, { color: config.color }]}>{config.icon}</Text>
-            </View>
             <View style={styles.typeCardInfo}>
               <Text style={styles.typeCardLabel}>{config.label}</Text>
-              <Text style={styles.typeCardDesc}>{config.description}</Text>
+              <Text style={styles.typeCardDesc} numberOfLines={1}>{TYPE_BENEFITS[config.type] ?? config.description}</Text>
             </View>
-            <Text style={styles.chevron}>&rsaquo;</Text>
+            <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -65,6 +75,10 @@ function DetailsStep({ wizard, updateWizard }: { wizard: WizardState; updateWiza
         <Text style={styles.fieldLabel}>Description</Text>
         <TextInput style={[styles.input, styles.textArea]} placeholder="Describe what this payment is for" value={wizard.description} onChangeText={(t) => updateWizard({ description: t })} multiline numberOfLines={3} placeholderTextColor={colors.textTertiary} />
       </View>
+      <ImagePickerField
+        uri={wizard.imageUri}
+        onChange={(uri) => updateWizard({ imageUri: uri })}
+      />
       {isDonation ? (
         <DonationTiers selectedAmount={wizard.amountDollars} onAmountChange={(amt) => updateWizard({ amountDollars: amt })} />
       ) : (
@@ -174,30 +188,31 @@ function OptionsStep({ wizard, updateWizard }: { wizard: WizardState; updateWiza
         <Text style={styles.stepTitle}>Checkout Options</Text>
         <Text style={styles.stepSubtitle}>Configure the buyer experience</Text>
       </View>
-      <View style={styles.toggleRow}>
-        <View style={styles.toggleInfo}>
-          <Text style={styles.toggleLabel}>Allow Tipping</Text>
-          <Text style={styles.toggleDesc}>Buyers can add a tip at checkout</Text>
+      <View style={styles.toggleCard}>
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleInfo}>
+            <Text style={styles.toggleLabel}>Allow Tipping</Text>
+            <Text style={styles.toggleDesc}>Buyers can add a tip at checkout</Text>
+          </View>
+          <Switch value={wizard.allowTipping} onValueChange={(v) => updateWizard({ allowTipping: v })} trackColor={{ false: colors.backgroundTertiary, true: colors.primary + '40' }} thumbColor={wizard.allowTipping ? colors.primary : colors.textTertiary} />
         </View>
-        <Switch value={wizard.allowTipping} onValueChange={(v) => updateWizard({ allowTipping: v })} trackColor={{ false: colors.backgroundTertiary, true: colors.primary + '40' }} thumbColor={wizard.allowTipping ? colors.primary : colors.textTertiary} />
-      </View>
-      <View style={styles.divider} />
-      <View style={styles.toggleRow}>
-        <View style={styles.toggleInfo}>
-          <Text style={styles.toggleLabel}>Collect Shipping Address</Text>
-          <Text style={styles.toggleDesc}>Show address form on checkout</Text>
+        <View style={styles.divider} />
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleInfo}>
+            <Text style={styles.toggleLabel}>Collect Shipping Address</Text>
+            <Text style={styles.toggleDesc}>Show address form on checkout</Text>
+          </View>
+          <Switch value={wizard.askForShipping} onValueChange={(v) => updateWizard({ askForShipping: v })} trackColor={{ false: colors.backgroundTertiary, true: colors.primary + '40' }} thumbColor={wizard.askForShipping ? colors.primary : colors.textTertiary} />
         </View>
-        <Switch value={wizard.askForShipping} onValueChange={(v) => updateWizard({ askForShipping: v })} trackColor={{ false: colors.backgroundTertiary, true: colors.primary + '40' }} thumbColor={wizard.askForShipping ? colors.primary : colors.textTertiary} />
-      </View>
-      <View style={styles.divider} />
-      <View style={styles.toggleRow}>
-        <View style={styles.toggleInfo}>
-          <Text style={styles.toggleLabel}>Enable Coupons</Text>
-          <Text style={styles.toggleDesc}>Buyers can enter coupon codes</Text>
+        <View style={styles.divider} />
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleInfo}>
+            <Text style={styles.toggleLabel}>Enable Coupons</Text>
+            <Text style={styles.toggleDesc}>Buyers can enter coupon codes</Text>
+          </View>
+          <Switch value={wizard.enableCoupon} onValueChange={(v) => updateWizard({ enableCoupon: v })} trackColor={{ false: colors.backgroundTertiary, true: colors.primary + '40' }} thumbColor={wizard.enableCoupon ? colors.primary : colors.textTertiary} />
         </View>
-        <Switch value={wizard.enableCoupon} onValueChange={(v) => updateWizard({ enableCoupon: v })} trackColor={{ false: colors.backgroundTertiary, true: colors.primary + '40' }} thumbColor={wizard.enableCoupon ? colors.primary : colors.textTertiary} />
       </View>
-      <View style={styles.divider} />
       <CustomFieldsBuilder fields={wizard.customFields} onFieldsChange={(fields) => updateWizard({ customFields: fields })} />
       <View style={styles.field}>
         <Text style={styles.fieldLabel}>Payment Note</Text>
@@ -315,6 +330,7 @@ export function CreateScreen({ wizard, updateWizard, resetWizard, onLinkCreated,
       totalRevenue: { amount: 0, currency: 'USD' },
       eventDate: wizard.eventDate || undefined,
       eventVenue: wizard.eventVenue || undefined,
+      imageUri: wizard.imageUri || undefined,
       isPaused: false,
       isOneTime: false,
     }
@@ -352,44 +368,315 @@ export function CreateScreen({ wizard, updateWizard, resetWizard, onLinkCreated,
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
+  screen: { flex: 1, backgroundColor: '#F7F7F7' },
   scrollContent: { flex: 1 },
-  navBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingTop: 56, paddingBottom: spacing.md, backgroundColor: colors.background },
-  navCancel: { fontSize: fontSize.md, color: colors.primary, fontWeight: fontWeight.medium },
-  navTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.textPrimary },
-  progressBar: { height: 3, backgroundColor: colors.backgroundTertiary },
-  progressFill: { height: 3, backgroundColor: colors.primary },
-  stepHeader: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing.lg },
-  stepTitle: { fontSize: fontSize.xxl, fontWeight: fontWeight.bold, color: colors.textPrimary },
-  stepSubtitle: { fontSize: fontSize.md, color: colors.textSecondary, marginTop: 4 },
+
+  // ── Nav bar ────────────────────────────────────────────────────────────────
+  navBar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg, paddingTop: 56, paddingBottom: spacing.md,
+    backgroundColor: '#F7F7F7',
+    borderBottomWidth: 1, borderBottomColor: colors.borderLight,
+  },
+  navCancel: { fontSize: fontSize.lg, color: colors.brand, fontWeight: fontWeight.medium },
+  navTitle: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.textPrimary },
+
+  // ── Progress bar (Arcade: brand green fill) ────────────────────────────────
+  progressBar: { height: 2, backgroundColor: colors.surfaceDefault },
+  progressFill: { height: 2, backgroundColor: colors.brand },
+
+  // ── Step header ────────────────────────────────────────────────────────────
+  stepHeader: { paddingHorizontal: spacing.lg, paddingTop: spacing.xxl, paddingBottom: spacing.lg },
+  stepTitle: { fontSize: fontSize.xxl, fontWeight: fontWeight.bold, color: colors.textPrimary, letterSpacing: -0.3 },
+  stepSubtitle: { fontSize: fontSize.lg, color: colors.textSecondary, marginTop: 4 },
   stepContent: { flex: 1 },
-  typeList: { paddingHorizontal: spacing.xl, gap: spacing.sm },
-  typeCard: { flexDirection: 'row', alignItems: 'center', padding: spacing.lg, backgroundColor: colors.backgroundSecondary, borderRadius: radius.lg, gap: spacing.md },
-  typeCardIcon: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  typeCardIconText: { fontSize: 18, fontWeight: fontWeight.bold },
+
+  // ── Type selector ─────────────────────────────────────────────────────────
+  typeList: { gap: spacing.sm, paddingHorizontal: spacing.lg },
+  typeCard: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: spacing.lg, paddingVertical: spacing.lg,
+    backgroundColor: colors.background, gap: spacing.lg,
+    minHeight: 72,
+    borderRadius: radius.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  typeCardIcon: { width: 48, height: 48, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  typeCardIconText: { fontSize: 20, fontWeight: fontWeight.bold },
   typeCardInfo: { flex: 1 },
-  typeCardLabel: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.textPrimary },
+  typeCardLabel: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.textPrimary },
   typeCardDesc: { fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 2 },
-  chevron: { fontSize: 24, color: colors.textTertiary },
-  field: { paddingHorizontal: spacing.xl, marginBottom: spacing.lg },
-  fieldLabel: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.textPrimary, marginBottom: spacing.sm },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, fontSize: fontSize.md, color: colors.textPrimary, backgroundColor: colors.background },
-  textArea: { minHeight: 80, textAlignVertical: 'top' },
+  chevron: { fontSize: 22, color: colors.textTertiary },
+
+  // ── Form fields ────────────────────────────────────────────────────────────
+  field: {
+    marginHorizontal: spacing.lg, marginBottom: spacing.sm,
+    backgroundColor: colors.background,
+    borderRadius: radius.xl,
+    paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  fieldLabel: {
+    fontSize: fontSize.sm, fontWeight: fontWeight.medium,
+    color: colors.textSecondary, marginBottom: spacing.xs,
+    textTransform: 'uppercase', letterSpacing: 0.5,
+  },
+  input: {
+    fontSize: fontSize.lg, color: colors.textPrimary,
+    paddingVertical: spacing.sm,
+    backgroundColor: 'transparent',
+  },
+  textArea: { minHeight: 72, textAlignVertical: 'top' },
   amountRow: { flexDirection: 'row', alignItems: 'center' },
   currencySymbol: { fontSize: fontSize.xl, fontWeight: fontWeight.semibold, color: colors.textPrimary, marginRight: spacing.sm },
   amountInput: { flex: 1, fontSize: fontSize.xl, fontWeight: fontWeight.semibold },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
+
+  // ── Options (toggles) ─────────────────────────────────────────────────────
+  toggleCard: {
+    marginHorizontal: spacing.lg, marginBottom: spacing.sm,
+    backgroundColor: colors.background,
+    borderRadius: radius.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  toggleRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg, paddingVertical: spacing.lg,
+    minHeight: 64,
+  },
   toggleInfo: { flex: 1, marginRight: spacing.lg },
-  toggleLabel: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textPrimary },
+  toggleLabel: { fontSize: fontSize.lg, fontWeight: fontWeight.medium, color: colors.textPrimary },
   toggleDesc: { fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 2 },
-  divider: { height: 1, backgroundColor: colors.borderLight, marginHorizontal: spacing.xl },
-  reviewCard: { marginHorizontal: spacing.xl, backgroundColor: colors.backgroundSecondary, borderRadius: radius.lg, padding: spacing.lg },
+  divider: { height: 1, backgroundColor: colors.borderLight },
+
+  // ── Review card ────────────────────────────────────────────────────────────
+  reviewCard: {
+    marginHorizontal: spacing.lg,
+    backgroundColor: colors.surfaceDefault,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+  },
   reviewRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: spacing.sm },
-  reviewDivider: { height: 1, backgroundColor: colors.border + '40' },
-  reviewLabel: { fontSize: fontSize.sm, color: colors.textSecondary },
-  reviewValue: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.textPrimary, textAlign: 'right', flex: 1, marginLeft: spacing.lg },
-  bottomAction: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: spacing.xl, paddingBottom: 36, backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.borderLight },
-  primaryButton: { backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: spacing.lg, alignItems: 'center' },
-  primaryButtonDisabled: { opacity: 0.4 },
-  primaryButtonText: { color: colors.textInverse, fontSize: fontSize.md, fontWeight: fontWeight.semibold },
+  reviewDivider: { height: 1, backgroundColor: colors.borderLight },
+  reviewLabel: { fontSize: fontSize.md, color: colors.textSecondary },
+  reviewValue: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.textPrimary, textAlign: 'right', flex: 1, marginLeft: spacing.lg },
+
+  // ── Bottom action (Arcade button-cta prominent) ───────────────────────────
+  bottomAction: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: 36,
+    backgroundColor: colors.background,
+    borderTopWidth: 1, borderTopColor: colors.borderLight,
+  },
+  primaryButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.full,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButtonDisabled: { opacity: 0.35 },
+  primaryButtonText: { color: colors.primaryText, fontSize: fontSize.lg, fontWeight: fontWeight.semibold },
+
+  // ── Variant picker strip ───────────────────────────────────────────────────
+  variantStrip: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  variantPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#F0F0F0',
+  },
+  variantPillActive: {
+    backgroundColor: '#000000',
+  },
+  variantPillText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#1A1A1A',
+  },
+  variantPillTextActive: {
+    color: '#FFFFFF',
+  },
+
+  // ── Variant 2: 2-col Grid ──────────────────────────────────────────────────
+  v2Grid: { paddingHorizontal: spacing.lg, gap: spacing.sm },
+  v2Row: { flexDirection: 'row', gap: spacing.sm },
+  v2Card: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    minHeight: 96,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  v2CardEmpty: { flex: 1 },
+  v2Accent: { position: 'absolute', top: 0, left: 0, right: 0, height: 6 },
+  v2Label: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textPrimary, textAlign: 'center', paddingHorizontal: spacing.sm },
+
+  // ── Variant 3: Color Blocks ────────────────────────────────────────────────
+  v3Card: {
+    marginHorizontal: spacing.lg,
+    borderRadius: radius.xl,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  v3Label: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: '#FFFFFF' },
+  v3Desc: { fontSize: fontSize.sm, color: 'rgba(255,255,255,0.85)', marginTop: 4 },
+
+  // ── Variant 4: Minimal Rows ────────────────────────────────────────────────
+  v4Container: { marginHorizontal: spacing.lg },
+  v4Row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+  },
+  v4Label: { fontSize: fontSize.lg, color: colors.textPrimary, fontWeight: fontWeight.medium },
+  v4Divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.borderLight },
+
+  // ── Variant 5: Icon Chips ──────────────────────────────────────────────────
+  v5Wrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  v5Chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    backgroundColor: colors.background,
+  },
+  v5Icon: { fontSize: 16 },
+  v5ChipLabel: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textPrimary },
+
+  // ── Variant 6: Large Feature Cards ────────────────────────────────────────
+  v6Card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.background,
+    borderRadius: radius.xl,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    minHeight: 120,
+    borderLeftWidth: 4,
+    gap: spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  v6Icon: { fontSize: 36 },
+
+  // ── Variant 7: Compact 3-col Grid ─────────────────────────────────────────
+  v7Grid: { paddingHorizontal: spacing.lg, gap: spacing.sm },
+  v7Row: { flexDirection: 'row', gap: spacing.sm },
+  v7Tile: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+    minHeight: 72,
+  },
+  v7TileEmpty: { flex: 1 },
+  v7TileIcon: { fontSize: 24 },
+  v7TileLabel: { fontSize: 10, fontWeight: fontWeight.semibold, color: colors.textPrimary, textAlign: 'center', paddingHorizontal: 4 },
+
+  // ── Variant 8: Magazine ────────────────────────────────────────────────────
+  v8Container: { gap: spacing.sm },
+  v8Hero: {
+    marginHorizontal: spacing.lg,
+    borderRadius: radius.xl,
+    height: 140,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    justifyContent: 'flex-end',
+  },
+  v8HeroLabel: { fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: '#FFFFFF' },
+  v8HeroDesc: { fontSize: fontSize.sm, color: 'rgba(255,255,255,0.85)', marginTop: 4 },
+
+  // ── Variant 9: Horizontal Scroll Cards ────────────────────────────────────
+  v9Strip: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  v9Card: {
+    width: 160,
+    height: 120,
+    backgroundColor: colors.background,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  v9Icon: { fontSize: 24 },
+  v9Label: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textPrimary },
+  v9Desc: { fontSize: 11, color: colors.textSecondary, lineHeight: 15 },
+
+  // ── Variant 10: Numbered List ──────────────────────────────────────────────
+  v10Card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.background,
+    borderRadius: radius.xl,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    gap: spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  v10Number: { fontSize: 28, fontWeight: fontWeight.bold, minWidth: 44 },
 })

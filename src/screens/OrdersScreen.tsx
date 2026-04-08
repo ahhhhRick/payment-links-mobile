@@ -19,13 +19,21 @@ const ORDER_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 
 interface OrdersScreenProps {
   onOrderPress?: (order: any) => void
+  totalRevenue?: number
 }
 
-export function OrdersScreen({ onOrderPress }: OrdersScreenProps = {}) {
+function formatBalance(cents: number) {
+  const dollars = Math.floor(cents / 100)
+  const rem = cents % 100
+  return '$' + dollars.toLocaleString('en-US') + '.' + rem.toString().padStart(2, '0')
+}
+
+export function OrdersScreen({ onOrderPress, totalRevenue = 0 }: OrdersScreenProps = {}) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Orders</Text>
+        <Text style={styles.balanceLabel}>Balance</Text>
+        <Text style={styles.balanceAmount}>{formatBalance(totalRevenue)}</Text>
         <Text style={styles.subtitle}>{SAMPLE_ORDERS.length} recent orders</Text>
       </View>
 
@@ -64,15 +72,17 @@ export function OrdersScreen({ onOrderPress }: OrdersScreenProps = {}) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.backgroundSecondary },
+  container: { flex: 1, backgroundColor: '#F7F7F7' },
   header: {
     paddingHorizontal: spacing.xl,
     paddingTop: 60,
     paddingBottom: spacing.lg,
     backgroundColor: colors.background,
   },
+  balanceLabel: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.textTertiary, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: spacing.sm },
+  balanceAmount: { fontSize: 46, fontWeight: fontWeight.bold, color: colors.textPrimary, letterSpacing: -1.5, lineHeight: 50 },
   title: { fontSize: fontSize.xxxl, fontWeight: fontWeight.bold, color: colors.textPrimary },
-  subtitle: { fontSize: fontSize.md, color: colors.textSecondary, marginTop: 4 },
+  subtitle: { fontSize: fontSize.md, color: colors.textSecondary, marginTop: 8 },
   list: { flex: 1 },
   listContent: { padding: spacing.lg, gap: spacing.sm },
   orderCard: {
